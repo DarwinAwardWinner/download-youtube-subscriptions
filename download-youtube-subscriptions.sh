@@ -22,8 +22,34 @@ fi
 
 # Set this according to preference
 set_default VIDEO_DIR "$(xdg-user-dir VIDEOS)" "$HOME/Videos"
+YOUTUBE_USER="$(first "$1" "$YOUTUBE_USER")"
+shift
 
-echo "Downloading new subscribed videos for $YOUTUBE_USER into $VIDEO_DIR"
+[ -n "$YOUTUBE_USER" ] || {
+  cat <<EOF
+ERROR: No youtube username found. You can export the YOUTUBE_USER
+environment variable or provide it on the command line.
+
+Usage: $0 USERNAME [EXTRA_HASHES...]
+
+EOF
+  exit 1
+}
+
+[ -n "$VIDEO_DIR" ] || {
+  cat <<EOF
+ERROR: Export VIDEO_DIR to specify where videos are downloaded to.
+
+Usage: $0 USERNAME [EXTRA_HASHES...]
+
+EOF
+  exit 2
+}
+
+echo "Downloading new subscribed videos for $YOUTUBE_USER into $VIDEO_DIR."
+if [ -n "$1" ]; then
+  echo "Also downloading the following videos: $@"
+fi
 
 cd "$VIDEO_DIR"
 
@@ -93,7 +119,14 @@ get_subscription_hashes () {
 }
 
 enqueue_new_hashes () {
-  get_subscription_hashes | while read hash; do
+  if [ -n "$1" ]; then
+    while [ -n "$1" ]; do
+      echo "$1"
+      shift
+    done
+  else
+    get_subscription_hashes
+  fi | while read hash; do
     if hash_done $hash; then
       true;
       # echo "Skipping already downloaded video $(describe_hash $hash)"
@@ -120,7 +153,11 @@ dl_hash () {
 }
 
 main () {
-  echo "Checking Youtube for new videos..."
+  if [ -n "$1" ]; then
+    echo "Enqueuing requested hashes"
+    enqueue_new_hashes "$@"
+  fi
+  echo "Checking Youtube for new subscribed videos..."
   enqueue_new_hashes
   queue_size=$(get_queued_hashes | wc -l)
   if [ $queue_size -gt 0 ]; then
@@ -146,4 +183,4 @@ main () {
   cleanup_done_hashes
 }
 
-main
+main "$@"
