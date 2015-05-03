@@ -112,7 +112,7 @@ mark_hash_done () {
 
 cleanup_done_hashes () {
   # Delete all but the 100 newest done files
-  ls $DONE_DIR | tail -r | tail -n +100 | while read old_hash; do
+  ls -t $DONE_DIR | tail -r | tail -n +100 | while read old_hash; do
     rm -f $DONE_DIR/old_hash
   done
 }
