@@ -58,9 +58,16 @@ COMPLETED_DIR=$VIDEO_DIR/.done
 
 mkdir -p $QUEUE_DIR $COMPLETED_DIR
 
+# Change these according to preference
 # http://en.wikipedia.org/wiki/YouTube#Quality_and_codecs
-DOWNLOAD_OPTS="--ignore-errors --continue --output=%(upload_date)s-%(stitle)s.%(ext)s --format=18"
-DOWNLOAD_OPTS_ANY_FORMAT="--ignore-errors --continue --output=%(upload_date)s-%(stitle)s.%(ext)s"
+OUTPUT_OPTS="--output=%(upload_date)s-%(stitle)s.%(ext)s"
+#FORMAT_OPTS="--format=18"
+# Example format.  Downlaods best quality video and audio without going over 1080p.
+FORMAT_OPTS="--format=bestvideo[height<=?1080]+bestaudio --merge-output-format=mkv"
+
+# Leave these alone
+DOWNLOAD_OPTS="--ignore-errors --continue $OUTPUT_OPTS $FORMAT_OPTS"
+DOWNLOAD_OPTS_ANY_FORMAT="--ignore-errors --continue $OUTPUT_OPTS"
 
 get_title () {
   if [ -s $QUEUE_DIR/$1 ]; then
@@ -105,7 +112,7 @@ mark_hash_done () {
 
 cleanup_done_hashes () {
   # Delete all but the 100 newest done files
-  ls $DONE_DIR | head -n-100 | while read old_hash; do
+  ls $DONE_DIR | tail -r | tail -n +100 | while read old_hash; do
     rm -f $DONE_DIR/old_hash
   done
 }
@@ -115,7 +122,7 @@ get_queued_hashes () {
 }
 
 get_subscription_hashes () {
-  wget -q -O- 'http://gdata.youtube.com/feeds/api/users/'"$YOUTUBE_USER"'/newsubscriptionvideos?prettyprint=true&fields=entry%28link[@rel=%27alternate%27]%28@href%29%29' | perl -lane 'print "$1" if m{\Qhttp://www.youtube.com/watch?v=\E([^&]+)}' | tac
+  wget -q -O- 'http://gdata.youtube.com/feeds/api/users/'"$YOUTUBE_USER"'/newsubscriptionvideos?prettyprint=true&fields=entry%28link[@rel=%27alternate%27]%28@href%29%29' | perl -lane 'print "$1" if m{\Qhttp://www.youtube.com/watch?v=\E([^&]+)}' | tail -r
 }
 
 enqueue_new_hashes () {
