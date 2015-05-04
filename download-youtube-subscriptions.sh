@@ -122,7 +122,7 @@ get_queued_hashes () {
 }
 
 get_subscription_hashes () {
-  wget -q -O- 'http://gdata.youtube.com/feeds/api/users/'"$YOUTUBE_USER"'/newsubscriptionvideos?prettyprint=true&fields=entry%28link[@rel=%27alternate%27]%28@href%29%29' | perl -lane 'print "$1" if m{\Qhttp://www.youtube.com/watch?v=\E([^&]+)}' | tail -r
+  wget -q -O- 'http://gdata.youtube.com/feeds/api/users/'"$YOUTUBE_USER"'/newsubscriptionvideos?prettyprint=true&fields=entry%28link[@rel=%27alternate%27]%28@href%29%29' | perl -lane 'print "$1" if m{\Qhttp://www.youtube.com/watch?v=\E([^&]+)}' | (tac 2>/dev/null || tail -r)
 }
 
 enqueue_new_hashes () {
